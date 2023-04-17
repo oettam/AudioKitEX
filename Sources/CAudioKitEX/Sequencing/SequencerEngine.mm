@@ -14,9 +14,8 @@
 
 using AudioKit::RingBuffer;
 
-/// NOTE: To support more than a single channel, RunningStatus can be made larger
-/// e.g. typedef std::bitset<128 * 16> RunningStatus; would track 16 channels of notes
-typedef std::bitset<128> RunningStatus;
+/// Track 16 channels of notes
+typedef std::bitset<128 * 16> RunningStatus;
 
 struct SequencerEvent {
     bool notesOff = false;
@@ -104,11 +103,12 @@ struct SequencerEngineImpl {
 
     /// Update note playing status
     void updateRunningStatus(UInt8 status, UInt8 data1, UInt8 data2) {
-        if (status == MIDI_NOTE_OFF) {
-            runningStatus.set(data1, 0);
+        UInt8 channel = status & 0xf;
+        if ((status & 0xf0) == MIDI_NOTE_OFF) {
+            runningStatus.set(channel * 128 + data1, 0);
         }
-        if (status == MIDI_NOTE_ON) {
-            runningStatus.set(data1, 1);
+        if ((status & 0xf0) == MIDI_NOTE_ON) {
+            runningStatus.set(channel * 128 + data1, 1);
         }
     }
 
@@ -118,7 +118,9 @@ struct SequencerEngineImpl {
         if (runningStatus.any() || (panic == true)) {
             for (int i = (int)runningStatus.size() - 1; i >= 0; i--) {
                 if (runningStatus[i] == 1 || (panic == true)) {
-                    sendMidiData(MIDI_NOTE_OFF, (UInt8)i, 0, 1, 0);
+                    UInt8 channel = i / 128;
+                    UInt8 note = i % 128;
+                    sendMidiData(MIDI_NOTE_OFF + channel, note, 0, 1, 0);
                 }
             }
         }

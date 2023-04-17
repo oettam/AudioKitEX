@@ -90,12 +90,12 @@ public struct NoteEventSequence: Equatable {
         totalDuration += duration
         var newNote = SequenceNote()
 
-        newNote.noteOn.status = noteOnByte
+        newNote.noteOn.status = MIDIStatus(type: .noteOn, channel: channel).byte
         newNote.noteOn.data1 = noteNumber
         newNote.noteOn.data2 = velocity
         newNote.noteOn.beat = position
 
-        newNote.noteOff.status = noteOffByte
+        newNote.noteOff.status = MIDIStatus(type: .noteOff, channel: channel).byte
         newNote.noteOff.data1 = noteNumber
         newNote.noteOff.data2 = velocity
         newNote.noteOff.beat = position + duration
